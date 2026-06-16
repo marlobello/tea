@@ -6,9 +6,13 @@ export const DOWN = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 export const fmt = (n, d = 0) => n.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
 export const usd = n => "$" + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+// Escape user-supplied text before inserting into innerHTML.
+export const escapeHtml = s => String(s).replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 // Heatmap color scale (blue -> red as value approaches max).
 export function colorScale(v, max, hueLow = 210, hueHigh = 0) {
-  const t = Math.min(v / max, 1);
+  const t = max > 0 ? Math.min(v / max, 1) : 0;
   const hue = hueLow + (hueHigh - hueLow) * t;
   return `hsl(${hue},75%,${28 + t * 30}%)`;
 }
@@ -30,7 +34,13 @@ export function deriveBasis(IV) {
     const mo = i + 1, a = moyAgg[mo];
     return { m: mo, name: MONTHS[i], kwh: a ? Math.round(a.k / a.d * 30) : 0 };
   });
-  const calcMonths = Object.keys(IV.monthHour).filter(m => IV.monthMeta[m].days >= 28).sort().slice(-12);
+  // Prefer the latest 12 complete (>=28-day) months. If none are complete
+  // (e.g. a short upload), fall back to whatever months exist so downstream
+  // math has a non-empty basis and never divides by zero.
+  const allMonths = Object.keys(IV.monthHour).sort();
+  const completeMonths = allMonths.filter(m => IV.monthMeta[m].days >= 28);
+  const basisMonths = (completeMonths.length ? completeMonths : allMonths);
+  const calcMonths = basisMonths.slice(-12);
   const annualKwh = calcMonths.reduce((s, m) => s + IV.monthMeta[m].kwh, 0);
   return { calMonthly, typYear, calcMonths, annualKwh };
 }

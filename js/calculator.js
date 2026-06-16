@@ -1,5 +1,5 @@
 // calculator.js — hourly profile chart (window-driven) + plan comparison calculator.
-import { DOWN, fmt, usd, inWindow, deriveBasis } from './util.js';
+import { DOWN, fmt, usd, inWindow, escapeHtml, deriveBasis } from './util.js';
 
 export function initCalculator(IV) {
   const { calcMonths, annualKwh } = deriveBasis(IV);
@@ -18,13 +18,13 @@ export function initCalculator(IV) {
   function windowShare(pred) {
     let f = 0, t = 0;
     calcMonths.forEach(m => { const g = IV.monthDowHour[m]; for (let wd = 0; wd < 7; wd++) for (let h = 0; h < 24; h++) { t += g[wd][h]; if (pred(wd, h)) f += g[wd][h]; } });
-    return f / t;
+    return t > 0 ? f / t : 0;
   }
 
   /* ---- Real hourly profile (shaded by night window) ---- */
   function drawProfile() {
     const p = IV.hourProfile[profKey], tot = p.reduce((a, b) => a + b, 0);
-    const share = p.reduce((a, x, h) => a + (inNightWin(h) ? x : 0), 0) / tot;
+    const share = tot > 0 ? p.reduce((a, x, h) => a + (inNightWin(h) ? x : 0), 0) / tot : 0;
     document.getElementById('nightShareLbl').textContent = fmt(share * 100, 0) + "% (this profile)";
     const bg = p.map((_, h) => inNightWin(h) ? '#5c7cfa' : '#4dabf7');
     if (hourChart) hourChart.destroy();
@@ -47,7 +47,7 @@ export function initCalculator(IV) {
   const body = document.getElementById('planBody');
   function addRow(p) {
     const tr = document.createElement('tr'); tr.className = 'planrow';
-    tr.innerHTML = `<td><input type="text" value="${p.name}"></td>
+    tr.innerHTML = `<td><input type="text" value="${escapeHtml(p.name)}"></td>
       <td><input type="number" step="0.01" value="${p.tduBase}"></td>
       <td><input type="number" step="0.0001" value="${p.tduRate}"></td>
       <td><input type="number" step="0.01" value="${p.base}"></td>
@@ -96,14 +96,14 @@ export function initCalculator(IV) {
         if (p.credit > 0 && total >= p.cmin) c -= p.credit;
         monthly.push(c); annual += c;
       });
-      return { name: p.name, annual, monthly, eff: annual / annualKwh * 100, free: [p.fn ? 'N' : '', p.fw ? 'W' : ''].filter(Boolean).join('+') };
+      return { name: p.name, annual, monthly, eff: annualKwh > 0 ? annual / annualKwh * 100 : 0, free: [p.fn ? 'N' : '', p.fw ? 'W' : ''].filter(Boolean).join('+') };
     });
     results.sort((a, b) => a.annual - b.annual);
     const best = results[0].annual;
     document.getElementById('results').innerHTML = `
       <table><thead><tr><th>Plan</th><th>Free</th><th>Est. annual cost</th><th>Effective \u00a2/kWh</th><th>vs best</th><th></th></tr></thead>
       <tbody>${results.map((r, i) => `<tr class="${i === 0 ? 'winner' : ''}">
-        <td>${r.name}</td><td>${r.free || '\u2014'}</td><td>${usd(r.annual)}</td><td>${fmt(r.eff, 2)}\u00a2</td>
+        <td>${escapeHtml(r.name)}</td><td>${r.free || '\u2014'}</td><td>${usd(r.annual)}</td><td>${fmt(r.eff, 2)}\u00a2</td>
         <td>${i === 0 ? '\u2014' : '+' + usd(r.annual - best)}</td>
         <td>${i === 0 ? '<span class="pill good">cheapest</span>' : ''}</td></tr>`).join('')}
       </tbody></table>

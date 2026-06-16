@@ -11,8 +11,6 @@ h1{margin:0 0 4px;font-size:24px}
 h2{font-size:17px;margin:0 0 14px}
 .sub{color:var(--muted);font-size:13px}
 .wrap{padding:20px 28px;max-width:1320px;margin:0 auto}
-.note{background:#14291c;border:1px solid #2f5d3a;color:#b2f2bb;
-  padding:10px 14px;border-radius:8px;font-size:13px;margin:14px 0}
 .grid{display:grid;gap:16px}
 .kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
@@ -46,8 +44,6 @@ canvas{max-width:100%}
   padding:5px 6px;border-radius:6px;font-size:13px}
 .ctrl-line input[type=range]{flex:1;min-width:130px}
 .ctrl-line input:disabled,.ctrl-line select:disabled{opacity:.4;cursor:not-allowed}
-.chk{display:flex;align-items:center;gap:6px;min-width:118px;color:var(--text);cursor:pointer}
-.bignum{font-size:26px;font-weight:700;color:var(--night)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line)}
 th:first-child,td:first-child{text-align:left}
@@ -73,14 +69,12 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;le
 small.help{color:var(--muted);font-size:11px}
 .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 /* heatmaps */
-.hm{display:grid;gap:2px;font-size:10px}
 .hmcell{border-radius:2px;min-width:0}
 .fillcard{display:flex;flex-direction:column}
 .heatgrid{height:300px;flex:0 0 auto}
 .daycell{border-radius:2px;min-width:0}
 .scalebar{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-top:8px;flex:0 0 auto}
 .swatch{width:14px;height:14px;border-radius:3px}
-.axisrow{display:grid;font-size:10px;color:var(--muted)}
 
 /* ---- app shell: header actions, sample banner ---- */
 .header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}

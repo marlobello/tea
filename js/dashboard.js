@@ -19,7 +19,7 @@ export function renderDashboard(IV) {
   const over1000 = calcMonths.filter(m => IV.monthMeta[m].kwh >= 1000).length;
   const over2000 = calcMonths.filter(m => IV.monthMeta[m].kwh >= 2000).length;
   const avgDemand = IV.stats.totalKwh / (IV.stats.days * 24);
-  const loadFactor = avgDemand / IV.stats.peakKw * 100;
+  const loadFactor = IV.stats.peakKw > 0 ? avgDemand / IV.stats.peakKw * 100 : 0;
   const kpis = [
     { l: "Interval-year use", v: fmt(annualKwh) + " kWh", x: annualWindow, c: "var(--accent)" },
     { l: "Avg daily use", v: fmt(IV.stats.avgDay, 1) + " kWh", x: "all " + fmt(IV.stats.days) + " days", c: "var(--text)" },
@@ -174,11 +174,11 @@ export function renderDashboard(IV) {
   // weekday vs weekend averages (Mon-Fri vs Sat-Sun)
   const wkAvg = (IV.dow[0] + IV.dow[1] + IV.dow[2] + IV.dow[3] + IV.dow[4]) / 5;
   const weAvg = (IV.dow[5] + IV.dow[6]) / 2;
-  const wePct = (weAvg - wkAvg) / wkAvg * 100;
+  const wePct = wkAvg > 0 ? (weAvg - wkAvg) / wkAvg * 100 : 0;
 
   const ins = [];
   ins.push(`<b>${cap(seasonWord)}, ${driverWord} load.</b> Demand peaks around <b>${peakHourLabel}</b> (${causeWord}) and your all-time peak was <b>${fmt(IV.stats.peakKw, 1)} kW</b> on ${IV.stats.peakWhen}.`);
-  ins.push(`<b>Load factor ${fmt(loadFactor, 0)}%</b>: your peak is ${fmt(IV.stats.peakKw / avgDemand, 1)}\u00d7 your average draw. ${loadFactor < 30 ? 'That\u2019s peaky \u2014 <b>avoid plans with demand charges</b> ($/kW), which penalize sharp peaks.' : 'Your load is relatively flat, so demand-charge plans hurt less than for most homes.'}`);
+  ins.push(`<b>Load factor ${fmt(loadFactor, 0)}%</b>: your peak is ${fmt(avgDemand > 0 ? IV.stats.peakKw / avgDemand : 0, 1)}\u00d7 your average draw. ${loadFactor < 30 ? 'That\u2019s peaky \u2014 <b>avoid plans with demand charges</b> ($/kW), which penalize sharp peaks.' : 'Your load is relatively flat, so demand-charge plans hurt less than for most homes.'}`);
   ins.push(`<b>${fmt(ns216 * 100, 0)}%</b> of your usage falls in an 11pm\u20136am window. ${ns216 < 0.25 ? 'A <b>free-nights</b> plan won\u2019t pay off unless you shift load (EV charging, pool pump, laundry, pre-cooling) into those hours \u2014 test it with the slider below.' : 'A meaningful share is already overnight, so a <b>free-nights</b> plan may pay off \u2014 confirm with the calculator below.'} You can also try the <b>Free weekends</b> option.`);
   ins.push(`<b>${over1000}/${nMonths}</b> months exceed 1000 kWh and <b>${over2000}/${nMonths}</b> exceed 2000 kWh, so usage-credit plans (which pay out once a month passes a minimum) ${over1000 >= nMonths / 2 ? 'trigger most of the year' : 'only trigger in your heavier months'}.`);
   ins.push(Math.abs(wePct) < 10
