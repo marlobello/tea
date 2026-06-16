@@ -147,19 +147,45 @@ export function renderDashboard(IV) {
     t.classList.add('active'); buildYoY(t.dataset.mode);
   });
 
-  /* ---- Insights (real-data driven) ---- */
+  /* ---- Insights (derived from the data) ---- */
   function realWindowShare(s, e) {
     let win = 0, tot = 0;
     calcMonths.forEach(m => { IV.monthHour[m].forEach((v, h) => { tot += v; if (inWindow(h, s, e)) win += v; }); });
     return win / tot;
   }
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   const ns216 = realWindowShare(23, 6);
+  const nMonths = calcMonths.length;
+
+  // peak hour-of-day from the real average profile
+  const prof = IV.hourProfile.all;
+  const peakHour = prof.reduce((bi, v, i) => v > prof[bi] ? i : bi, 0);
+  const peakHourLabel = `${peakHour}:00\u2013${(peakHour + 1) % 24}:00`;
+  const driverWord = peakHour >= 16 ? 'evening-driven' : peakHour <= 10 ? 'morning-driven' : 'midday-driven';
+
+  // summer- vs winter-peaking from the seasonal averages
+  const summerAvg = [6, 7, 8, 9].reduce((s, m) => s + typYear[m - 1].kwh, 0) / 4;
+  const winterAvg = [12, 1, 2].reduce((s, m) => s + typYear[m - 1].kwh, 0) / 3;
+  const summerPeaking = summerAvg >= winterAvg;
+  const seasonWord = summerPeaking ? 'summer-peaking' : 'winter-peaking';
+  const causeWord = summerPeaking ? 'likely AC' : 'likely heating';
+  const seasonRate = summerPeaking ? 'summer' : 'winter';
+
+  // weekday vs weekend averages (Mon-Fri vs Sat-Sun)
+  const wkAvg = (IV.dow[0] + IV.dow[1] + IV.dow[2] + IV.dow[3] + IV.dow[4]) / 5;
+  const weAvg = (IV.dow[5] + IV.dow[6]) / 2;
+  const wePct = (weAvg - wkAvg) / wkAvg * 100;
+
   const ins = [];
-  ins.push(`<b>Strong summer-peaking, evening-driven load.</b> Demand peaks near 17:00\u201318:00 (AC) and your all-time peak was <b>${fmt(IV.stats.peakKw, 1)} kW</b> on ${IV.stats.peakWhen}.`);
-  ins.push(`<b>Low load factor (${fmt(loadFactor, 0)}%)</b>: your peak is ${fmt(IV.stats.peakKw / avgDemand, 1)}\u00d7 your average. Avoid plans with <b>demand charges</b> ($/kW) \u2014 they punish peaky homes like yours.`);
-  ins.push(`Only <b>${fmt(ns216 * 100, 0)}%</b> of usage naturally falls in an 11pm\u20136am window. A <b>free-nights</b> plan won't pay off unless you shift load (EV charging, pool pump, laundry, pre-cooling) \u2014 or try the <b>Free weekends</b> option \u2014 then use the slider below to test it.`);
-  ins.push(`<b>${over1000}/12</b> months exceed 1000 kWh and <b>${over2000}/12</b> exceed 2000 kWh, so usage-credit plans (which pay out once you pass a minimum) trigger most of the year.`);
-  ins.push(`Weekday vs weekend use is similar (${fmt(Math.max(...IV.dow), 0)} vs ${fmt(Math.min(...IV.dow), 0)} kWh/day) \u2014 you're home a lot; whole-home <b>time-of-use</b> savings are limited without behavior change.`);
-  ins.push(`High volume (~${fmt(annualKwh)} kWh/yr): each 1\u00a2/kWh \u2248 <b>${usd(annualKwh * 0.01)}</b>/yr \u2014 prioritize the lowest all-in summer rate.`);
+  ins.push(`<b>${cap(seasonWord)}, ${driverWord} load.</b> Demand peaks around <b>${peakHourLabel}</b> (${causeWord}) and your all-time peak was <b>${fmt(IV.stats.peakKw, 1)} kW</b> on ${IV.stats.peakWhen}.`);
+  ins.push(`<b>Load factor ${fmt(loadFactor, 0)}%</b>: your peak is ${fmt(IV.stats.peakKw / avgDemand, 1)}\u00d7 your average draw. ${loadFactor < 30 ? 'That\u2019s peaky \u2014 <b>avoid plans with demand charges</b> ($/kW), which penalize sharp peaks.' : 'Your load is relatively flat, so demand-charge plans hurt less than for most homes.'}`);
+  ins.push(`<b>${fmt(ns216 * 100, 0)}%</b> of your usage falls in an 11pm\u20136am window. ${ns216 < 0.25 ? 'A <b>free-nights</b> plan won\u2019t pay off unless you shift load (EV charging, pool pump, laundry, pre-cooling) into those hours \u2014 test it with the slider below.' : 'A meaningful share is already overnight, so a <b>free-nights</b> plan may pay off \u2014 confirm with the calculator below.'} You can also try the <b>Free weekends</b> option.`);
+  ins.push(`<b>${over1000}/${nMonths}</b> months exceed 1000 kWh and <b>${over2000}/${nMonths}</b> exceed 2000 kWh, so usage-credit plans (which pay out once a month passes a minimum) ${over1000 >= nMonths / 2 ? 'trigger most of the year' : 'only trigger in your heavier months'}.`);
+  ins.push(Math.abs(wePct) < 10
+    ? `Weekday and weekend use are similar (${fmt(wkAvg, 0)} vs ${fmt(weAvg, 0)} kWh/day) \u2014 whole-home <b>time-of-use</b> savings are limited without behavior change.`
+    : wePct >= 10
+      ? `Weekends run <b>~${fmt(wePct, 0)}% higher</b> (${fmt(weAvg, 0)} vs ${fmt(wkAvg, 0)} kWh/day) \u2014 a <b>free-weekends</b> plan is worth a close look.`
+      : `Weekdays run <b>~${fmt(-wePct, 0)}% higher</b> (${fmt(wkAvg, 0)} vs ${fmt(weAvg, 0)} kWh/day) \u2014 you\u2019re likely out on weekends, so free-weekend perks help less.`);
+  ins.push(`High volume (~${fmt(annualKwh)} kWh/yr): each 1\u00a2/kWh \u2248 <b>${usd(annualKwh * 0.01)}</b>/yr \u2014 prioritize the lowest all-in <b>${seasonRate}</b> rate.`);
   document.getElementById('insights').innerHTML = ins.map(t => `<div class="ins">${t}</div>`).join('');
 }
