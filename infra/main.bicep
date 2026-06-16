@@ -41,6 +41,9 @@ param staticWebAppLocation string = 'centralus'
 ])
 param sku string = 'Free'
 
+@description('Optional custom domain to bind (CNAME must already point to the SWA default hostname). Leave empty to skip.')
+param customDomain string = ''
+
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
   location: resourceGroupLocation
@@ -53,6 +56,7 @@ module swa 'modules/staticwebapp.bicep' = {
     name: staticWebAppName
     location: staticWebAppLocation
     sku: sku
+    customDomain: customDomain
   }
 }
 

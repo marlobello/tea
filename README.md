@@ -83,6 +83,14 @@ az deployment sub create \
   --parameters infra/main.parameters.json
 ```
 
+### Custom domain
+
+The site is served at **https://tea.dotheneedful.dev** via a Cloudflare **CNAME** (DNS-only / not
+proxied) pointing at the Static Web App default hostname. The binding is declared in Bicep
+(`customDomain` parameter) and validated automatically through CNAME delegation — no TXT record is
+required for a subdomain whose CNAME already resolves to the app. Azure provisions the TLS
+certificate automatically.
+
 ### Required repo secrets
 
 | Secret | Purpose |

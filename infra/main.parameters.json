@@ -6,6 +6,7 @@
     "resourceGroupLocation": { "value": "southcentralus" },
     "staticWebAppName": { "value": "swa-tea" },
     "staticWebAppLocation": { "value": "centralus" },
-    "sku": { "value": "Free" }
+    "sku": { "value": "Free" },
+    "customDomain": { "value": "tea.dotheneedful.dev" }
   }
 }
