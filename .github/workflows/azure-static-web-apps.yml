@@ -1,8 +1,15 @@
-name: Azure Static Web Apps CI/CD
+name: Deploy App (Azure Static Web Apps)
+
+# Deploys the static site content to the Static Web App using its deployment token.
+# Infrastructure is managed separately by infra.yml.
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'infra/**'
+      - '.github/workflows/infra.yml'
+      - 'README.md'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [main]
@@ -27,10 +34,10 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          # This is a pure static site (no build step, no framework).
-          app_location: "/"        # app source is the repo root
-          api_location: ""          # no backend API
-          output_location: ""       # nothing to build; serve files as-is
+          # Pure static site (no build step, no framework, no API).
+          app_location: "/"
+          api_location: ""
+          output_location: ""
           skip_app_build: true
 
   close_pull_request:

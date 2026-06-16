@@ -56,31 +56,45 @@ swa start .
 
 ## Deploy to Azure Static Web Apps
 
-### Option A — `az` CLI (auto-wires GitHub Actions)
+This repo deploys via **GitHub Actions** using **passwordless OIDC** auth — no Azure credentials are
+stored in the repo. Two workflows:
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `.github/workflows/infra.yml` | changes under `infra/**`, or manual | Logs in via OIDC and runs the Bicep (`az deployment sub create`) to provision `rg-tea` + the Static Web App. |
+| `.github/workflows/azure-static-web-apps.yml` | app/content changes on `main`, and PRs | Uploads the static site to the Static Web App using its deployment token. |
+
+### Infrastructure (Bicep)
+
+`infra/main.bicep` is **subscription-scoped**: it creates the resource group **`rg-tea`** (in
+**South Central US**) and the Static Web App **`swa-tea`**.
+
+> **Region note:** Azure Static Web Apps is only offered in a limited set of regions (Central US,
+> East US 2, West US 2, West Europe, East Asia). **South Central US is not supported for the SWA
+> resource**, so the resource group lives in South Central US while the app resource is created in
+> **Central US** (the closest supported region). Static content is served from a global CDN either way.
+
+Deploy locally (optional — CI does this for you):
 
 ```bash
-az staticwebapp create \
-  --name tea-analyzer \
-  --resource-group <your-rg> \
-  --source https://github.com/marlobello/tea \
-  --branch main \
-  --app-location "/" \
-  --output-location "" \
-  --login-with-github
+az deployment sub create \
+  --location southcentralus \
+  --template-file infra/main.bicep \
+  --parameters infra/main.parameters.json
 ```
 
-This provisions the resource, adds the deployment token as the `AZURE_STATIC_WEB_APPS_API_TOKEN`
-repo secret, and triggers the workflow in `.github/workflows/`.
+### Required repo secrets
 
-### Option B — Bicep (IaC)
+| Secret | Purpose |
+|---|---|
+| `AZURE_CLIENT_ID` | OIDC app (service principal) client id for `infra.yml`. |
+| `AZURE_TENANT_ID` | Azure tenant id. |
+| `AZURE_SUBSCRIPTION_ID` | Target subscription id. |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Static Web App deployment token for content deploys. |
 
-```bash
-az group create -n <your-rg> -l eastus2
-az deployment group create -g <your-rg> -f infra/main.bicep -p name=tea-analyzer
-```
-
-Then add the deployment token as a repo secret named `AZURE_STATIC_WEB_APPS_API_TOKEN`
-(`az staticwebapp secrets list`) so the GitHub Actions workflow can deploy.
+The OIDC service principal is configured with federated credentials for the `main` branch and pull
+requests, and granted **Contributor** on the subscription. After provisioning, the SWA deployment
+token is read with `az staticwebapp secrets list --name swa-tea --resource-group rg-tea`.
 
 ## Data format
 

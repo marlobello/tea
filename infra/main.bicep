@@ -1,16 +1,38 @@
-// main.bicep — provisions an Azure Static Web App for the tea analyzer.
-// Deploy: az deployment group create -g <rg> -f infra/main.bicep \
-//           -p repositoryUrl=https://github.com/marlobello/tea repositoryBranch=main
+// main.bicep — subscription-scoped IaC for the tea analyzer.
+// Creates the resource group `rg-tea` and the Static Web App inside it.
 //
-// Note: linking the GitHub repo via Bicep requires a repositoryToken (a GitHub PAT).
-// Alternatively omit repositoryToken and connect the repo afterwards in the portal,
-// or use `az staticwebapp create` which wires up GitHub Actions automatically.
+// Deploy:
+//   az deployment sub create \
+//     --location southcentralus \
+//     --template-file infra/main.bicep \
+//     --parameters infra/main.parameters.json
+//
+// IMPORTANT: Static Web Apps is only offered in a limited set of regions
+// (Central US, East US 2, West US 2, West Europe, East Asia). South Central US
+// is NOT a supported SWA region, so the resource group lives in South Central US
+// while the Static Web App resource is created in Central US (the closest
+// supported region). Static content is served from a global CDN either way.
 
-@description('Name of the Static Web App resource.')
-param name string = 'tea-analyzer'
+targetScope = 'subscription'
 
-@description('Azure region for the Static Web App (Free tier regions: e.g. eastus2, centralus, westus2, westeurope, eastasia).')
-param location string = 'eastus2'
+@description('Resource group name.')
+param resourceGroupName string = 'rg-tea'
+
+@description('Resource group location (metadata only; South Central US is fine here).')
+param resourceGroupLocation string = 'southcentralus'
+
+@description('Static Web App resource name.')
+param staticWebAppName string = 'swa-tea'
+
+@description('Static Web App region (supported SWA region; NOT South Central US).')
+@allowed([
+  'centralus'
+  'eastus2'
+  'westus2'
+  'westeurope'
+  'eastasia'
+])
+param staticWebAppLocation string = 'centralus'
 
 @description('Hosting plan SKU.')
 @allowed([
@@ -19,39 +41,26 @@ param location string = 'eastus2'
 ])
 param sku string = 'Free'
 
-@description('GitHub repository URL to link (optional).')
-param repositoryUrl string = ''
+resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+  name: resourceGroupName
+  location: resourceGroupLocation
+}
 
-@description('Repository branch to deploy from.')
-param repositoryBranch string = 'main'
-
-@description('GitHub PAT with repo scope (optional; leave empty to link the repo later).')
-@secure()
-param repositoryToken string = ''
-
-resource staticSite 'Microsoft.Web/staticSites@2023-12-01' = {
-  name: name
-  location: location
-  sku: {
-    name: sku
-    tier: sku
-  }
-  properties: {
-    // App is a pure static site at the repo root with no build step.
-    buildProperties: {
-      appLocation: '/'
-      apiLocation: ''
-      outputLocation: ''
-      skipGithubActionWorkflowGeneration: true
-    }
-    repositoryUrl: empty(repositoryUrl) ? null : repositoryUrl
-    branch: empty(repositoryUrl) ? null : repositoryBranch
-    repositoryToken: empty(repositoryToken) ? null : repositoryToken
+module swa 'modules/staticwebapp.bicep' = {
+  scope: rg
+  name: 'staticwebapp'
+  params: {
+    name: staticWebAppName
+    location: staticWebAppLocation
+    sku: sku
   }
 }
 
-@description('The default hostname of the deployed site.')
-output defaultHostname string = staticSite.properties.defaultHostname
+@description('Default hostname of the deployed site.')
+output defaultHostname string = swa.outputs.defaultHostname
 
-@description('The Static Web App resource name.')
-output staticSiteName string = staticSite.name
+@description('Static Web App resource name.')
+output staticWebAppName string = swa.outputs.name
+
+@description('Resource group the app was deployed into.')
+output resourceGroupName string = rg.name
