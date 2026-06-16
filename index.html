@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tea — Texas Electricity Analyzer</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="header-row">
+    <div>
+      <h1>&#9889; tea — Texas Electricity Analyzer</h1>
+      <div class="sub">Smart Meter Texas &middot; 15-minute interval analysis &middot; your data never leaves your browser</div>
+    </div>
+    <div class="header-actions" id="headerActions" hidden>
+      <button class="btn sec" id="uploadNew">Upload new data / Reset</button>
+    </div>
+  </div>
+</header>
+
+<!-- Upload modal (shown until data is loaded) -->
+<div class="modal-overlay" id="uploadModal" hidden>
+  <div class="modal">
+    <h2>&#9889; Welcome to tea</h2>
+    <div class="lead">Upload your Smart Meter Texas <b>15-minute interval</b> CSV to analyze your
+      electricity usage and compare retail plans. Everything runs locally in your browser — your data
+      is never uploaded anywhere.</div>
+
+    <div class="dropzone" id="dropzone">
+      <div class="big">&#128228; Drag &amp; drop your CSV here</div>
+      <div class="small">or click to choose a file</div>
+      <input type="file" id="fileInput" accept=".csv,text/csv" hidden>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" id="chooseBtn">Choose file</button>
+      <button class="btn sec" id="sampleBtn">Try with sample data</button>
+      <span class="small" id="loadingMsg"></span>
+    </div>
+    <div class="modal-error" id="modalError"></div>
+
+    <div class="instructions">
+      <b>How to get your interval data:</b> Instructions for downloading your 15-minute interval CSV
+      from Smart Meter Texas are coming soon. For now, use <b>Try with sample data</b> to explore.
+    </div>
+  </div>
+</div>
+
+<main id="dashboard" hidden>
+<div class="wrap">
+
+  <div class="sample-banner" id="sampleBanner" hidden>
+    <span>&#128202; You're viewing <b>sample data</b>. Upload your own CSV to analyze your real usage.</span>
+    <button class="btn sec" id="bannerUpload">Upload my data</button>
+  </div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>&#128204; Insights for choosing a plan</h2>
+    <div id="insights"></div>
+  </div>
+
+  <!-- Monthly + Seasonal -->
+  <div class="grid two" style="margin-top:16px">
+    <div class="card">
+      <h2>Usage by Calendar Month <span class="legtag">(calendar months)</span></h2>
+      <div class="sub" style="margin-bottom:8px">Lines mark common rebate/credit thresholds.</div>
+      <div class="chartbox"><canvas id="monthlyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Seasonal Pattern <span class="legtag">(typical 30-day month)</span></h2>
+      <div class="chartbox"><canvas id="seasonChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Real hourly profile + Day of week -->
+  <div class="grid two" style="margin-top:16px">
+    <div class="card">
+      <h2>Average Hourly Load Profile <span class="legtag">&mdash; from your real interval data</span></h2>
+      <label class="ctrl" style="margin-bottom:10px;display:inline-flex">Show
+        <select id="profSelect">
+          <option value="all">All days</option>
+          <option value="summer">Summer (Jun&ndash;Sep)</option>
+          <option value="winter">Winter (Dec&ndash;Feb)</option>
+          <option value="shoulder">Shoulder</option>
+          <option value="weekday">Weekday</option>
+          <option value="weekend">Weekend</option>
+        </select>
+      </label>
+      <div class="chartbox" style="height:300px"><canvas id="hourChart"></canvas></div>
+      <small class="help">Shaded bars = your selected free/night window (set in the calculator below). Share of usage in window: <b id="nightShareLbl">&mdash;</b></small>
+    </div>
+    <div class="card">
+      <h2>By Day of Week</h2>
+      <div class="sub" style="margin-bottom:8px">Average daily kWh.</div>
+      <div class="chartbox" style="height:300px"><canvas id="dowChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Monthly usage by hour + Daily usage -->
+  <div class="grid two" style="margin-top:16px">
+    <div class="card fillcard">
+      <h2>Monthly Usage by Hour</h2>
+      <div class="sub" style="margin-bottom:10px">Average kW by hour of day (rows) across each month (columns). Brighter = higher demand.</div>
+      <div id="heatmap"></div>
+      <div class="scalebar" id="hmScale"></div>
+    </div>
+    <div class="card fillcard">
+      <h2>Daily Usage</h2>
+      <div class="sub" style="margin-bottom:10px">Each square = one day (kWh). Brighter = higher use. Spot heat waves &amp; vacations.</div>
+      <div id="calHeat"></div>
+      <div class="scalebar" id="calScale"></div>
+    </div>
+  </div>
+
+  <!-- Year over year -->
+  <div class="card" style="margin-top:16px;display:flex;flex-direction:column;min-height:480px">
+    <h2>Year-over-Year &amp; Daily Intensity</h2>
+    <div class="tabs">
+      <div class="tab active" data-mode="yoy">Year over Year (kWh)</div>
+      <div class="tab" data-mode="daily">Avg kWh / day</div>
+    </div>
+    <div class="chartbox" style="flex:1 1 auto;height:auto;min-height:360px"><canvas id="yoyChart"></canvas></div>
+  </div>
+
+  <!-- Plan calculator -->
+  <div class="card" style="margin-top:16px;display:flex;flex-direction:column">
+    <h2>&#129518; Plan Comparison Calculator <span class="legtag">&mdash; exact free-night/TOU costing from interval data</span></h2>
+    <div class="calc-controls">
+      <div class="ctrl-panel">
+        <div class="panel-title">Free-hours windows <span class="legtag" style="text-transform:none">&mdash; applied to plans marked below</span></div>
+        <div class="ctrl-line">
+          <span class="ctrl-lbl">Nights</span>
+          <input type="time" id="nightStart" step="3600" value="23:00">
+          <span class="sep">to</span>
+          <input type="time" id="nightEnd" step="3600" value="06:00">
+          <small class="help">daily</small>
+        </div>
+        <div class="ctrl-line">
+          <span class="ctrl-lbl">Weekends</span>
+          <select id="wStartDay">
+            <option value="0">Mon</option><option value="1">Tue</option><option value="2">Wed</option>
+            <option value="3">Thu</option><option value="4" selected>Fri</option><option value="5">Sat</option><option value="6">Sun</option>
+          </select>
+          <input type="time" id="wStartHour" step="3600" value="19:00" title="weekend start time">
+          <span class="sep">&rarr;</span>
+          <select id="wEndDay">
+            <option value="0">Mon</option><option value="1">Tue</option><option value="2">Wed</option>
+            <option value="3">Thu</option><option value="4">Fri</option><option value="5">Sat</option><option value="6" selected>Sun</option>
+          </select>
+          <input type="time" id="wEndHour" step="3600" value="23:00" title="weekend end time (inclusive)">
+        </div>
+      </div>
+      <div class="ctrl-panel">
+        <div class="panel-title">Load shifting</div>
+        <div class="ctrl-line">
+          <span class="ctrl-lbl">Shift to free hours</span>
+          <input type="range" id="shift" min="0" max="60" step="5" value="0">
+          <span id="shiftLbl" style="font-weight:600;min-width:34px;text-align:right">0%</span>
+        </div>
+        <div class="ctrl-line" style="margin-top:2px">
+          <span class="ctrl-lbl">Window coverage</span>
+          <span style="color:var(--night);font-weight:700" id="winShare">&mdash;</span>
+          <small class="help">of your usage falls in these windows</small>
+        </div>
+      </div>
+    </div>
+    <div class="sub" style="margin-bottom:10px">
+      Costs estimated over your most recent 12 complete interval months
+      (<span id="annualKwh"></span> kWh). Tick <b>Free nights</b> / <b>Free wknd</b> per plan to apply the windows above. Edit the example plans or add your own.
+    </div>
+    <div style="overflow-x:auto">
+      <table id="planTable">
+        <thead><tr>
+          <th>Plan name</th><th>TDU Base $</th><th>TDU Rate &cent;/kWh</th>
+          <th>Monthly base $</th><th>Energy Rate &cent;/kWh</th><th>Credit $</th><th>Credit min kWh</th>
+          <th>Free nights</th><th>Free wknd</th><th></th>
+        </tr></thead>
+        <tbody id="planBody"></tbody>
+      </table>
+    </div>
+    <div class="flex" style="margin-top:12px">
+      <button class="btn sec" id="addPlan">+ Add plan</button>
+      <button class="btn" id="calc">Calculate &amp; compare</button>
+    </div>
+    <div id="results" style="margin-top:20px"></div>
+    <div class="chartbox" style="flex:1 1 auto;height:auto;min-height:360px;margin-top:10px"><canvas id="planChart"></canvas></div>
+  </div>
+
+  <div class="sub" style="margin:24px 0;text-align:center">
+    Usage in kWh; costs are estimates for comparison only. Your data is processed entirely in your browser.
+  </div>
+</div>
+</main>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
