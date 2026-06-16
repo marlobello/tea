@@ -7,19 +7,27 @@ export function renderDashboard(IV) {
   const { calMonthly, typYear, calcMonths, annualKwh } = deriveBasis(IV);
 
   /* ---- KPIs ---- */
+  const ymLabel = ym => { const [y, m] = ym.split('-'); return `${MONTHS[+m - 1]} ${y}`; };
+  const fullMonths = Object.keys(IV.monthMeta).length;
+  const winFirst = calcMonths[0], winLast = calcMonths[calcMonths.length - 1];
+  const annualWindow = calcMonths.length === 12 ? `${ymLabel(winFirst)} – ${ymLabel(winLast)}` : `${calcMonths.length} mo`;
+  document.getElementById('dataRange').innerHTML =
+    `Analyzed <b>${ymLabel(IV.stats.start.slice(0, 7))} – ${ymLabel(IV.stats.end.slice(0, 7))}</b> · ${fmt(IV.stats.days)} days · ${fullMonths} calendar months of 15-min data. ` +
+    `Annual figures below use your latest 12 complete months (<b>${annualWindow}</b>); demand, peak &amp; load-factor use all data.`;
+
   const peak = typYear.reduce((a, b) => b.kwh > a.kwh ? b : a);
   const over1000 = calcMonths.filter(m => IV.monthMeta[m].kwh >= 1000).length;
   const over2000 = calcMonths.filter(m => IV.monthMeta[m].kwh >= 2000).length;
   const avgDemand = IV.stats.totalKwh / (IV.stats.days * 24);
   const loadFactor = avgDemand / IV.stats.peakKw * 100;
   const kpis = [
-    { l: "Interval-year use", v: fmt(annualKwh) + " kWh", x: "last 12 complete months", c: "var(--accent)" },
-    { l: "Avg daily use", v: fmt(IV.stats.avgDay, 1) + " kWh", x: "from 15-min data", c: "var(--text)" },
+    { l: "Interval-year use", v: fmt(annualKwh) + " kWh", x: annualWindow, c: "var(--accent)" },
+    { l: "Avg daily use", v: fmt(IV.stats.avgDay, 1) + " kWh", x: "all " + fmt(IV.stats.days) + " days", c: "var(--text)" },
     { l: "Peak demand", v: fmt(IV.stats.peakKw, 1) + " kW", x: IV.stats.peakWhen, c: "var(--bad)" },
     { l: "Load factor", v: fmt(loadFactor, 0) + "%", x: "avg " + fmt(avgDemand, 1) + " kW vs peak (low=peaky)", c: "var(--accent2)" },
-    { l: "Peak month", v: peak.name + " \u00b7 " + fmt(peak.kwh), x: "kWh (summer AC)", c: "var(--warn)" },
-    { l: "Months \u22651000 kWh", v: over1000 + " / 12", x: "qualify for usage credits", c: "var(--good)" },
-    { l: "Months \u22652000 kWh", v: over2000 + " / 12", x: "high-tier / summer", c: "var(--warn)" },
+    { l: "Peak month", v: peak.name + " \u00b7 " + fmt(peak.kwh), x: "avg across all years (summer AC)", c: "var(--warn)" },
+    { l: "Months \u22651000 kWh", v: over1000 + " / " + calcMonths.length, x: "qualify for usage credits", c: "var(--good)" },
+    { l: "Months \u22652000 kWh", v: over2000 + " / " + calcMonths.length, x: "high-tier / summer", c: "var(--warn)" },
   ];
   document.getElementById('kpis').innerHTML = kpis.map(k =>
     `<div class="card kpi"><div class="v" style="color:${k.c}">${k.v}</div>
