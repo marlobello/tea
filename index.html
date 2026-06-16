@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>tea — Texas Electricity Analyzer</title>
+<title>Texas Electricity Analyzer</title>
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
   integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
@@ -13,7 +13,7 @@
 <header>
   <div class="header-row">
     <div>
-      <h1>&#9889; tea — Texas Electricity Analyzer</h1>
+      <h1>&#9889; Texas Electricity Analyzer</h1>
       <div class="sub">Smart Meter Texas &middot; 15-minute interval analysis &middot; your data never leaves your browser</div>
     </div>
     <div class="header-actions" id="headerActions" hidden>
@@ -174,13 +174,14 @@
           <input type="range" id="shift" min="0" max="60" step="5" value="0">
           <span id="shiftLbl" style="font-weight:600;min-width:34px;text-align:right">0%</span>
         </div>
-        <div class="ctrl-line" style="margin-top:6px;margin-bottom:2px">
-          <span class="ctrl-lbl">Free usage</span>
-          <span id="freePct" style="font-size:26px;font-weight:700;color:var(--night)">&mdash;</span>
-          <small class="help">of total kWh billed at $0</small>
+        <div class="ctrl-line" style="margin-top:6px">
+          <span class="ctrl-lbl">Window coverage</span>
+          <span id="winShare" style="color:var(--night);font-weight:700">&mdash;</span>
         </div>
-        <div class="ctrl-line" style="margin-top:0">
-          <small class="help" id="freeBreakdown" style="line-height:1.4"></small>
+        <div class="ctrl-line" style="margin-top:2px">
+          <span class="ctrl-lbl">Free usage</span>
+          <span id="freePct" style="color:var(--night);font-weight:700">&mdash;</span>
+          <small class="help" id="freeNote"></small>
         </div>
       </div>
     </div>

@@ -73,21 +73,19 @@ export function initCalculator(IV) {
     const shiftPct = +document.getElementById('shift').value / 100;
     document.getElementById('shiftLbl').textContent = (shiftPct * 100 | 0) + '%';
 
-    // Shares of total usage (combined = the union of the night + weekend windows,
-    // i.e. the most a plan could make free by ticking both boxes).
+    // Separate window shares (what the user liked seeing) + the combined union
+    // for the slider-aware free-usage figure.
     const nShare = windowShare((wd, h) => inNightWin(h));
     const wShare = windowShare((wd, h) => inWeekendWin(wd, h));
     const combined = windowShare((wd, h) => inNightWin(h) || inWeekendWin(wd, h));
-    // Shifting moves a slice of the remaining daytime load into the free window.
     const shiftedShare = (1 - combined) * shiftPct;
     const freeShare = combined + shiftedShare;
 
+    document.getElementById('winShare').innerHTML = `nights ${fmt(nShare * 100, 0)}% &middot; weekends ${fmt(wShare * 100, 0)}%`;
     document.getElementById('freePct').textContent = fmt(freeShare * 100, 0) + '%';
-    document.getElementById('freeBreakdown').innerHTML =
-      `${fmt(combined * 100, 0)}% already falls in your free windows (nights ${fmt(nShare * 100, 0)}% + weekends ${fmt(wShare * 100, 0)}%, overlap removed)` +
-      (shiftPct > 0
-        ? `, plus <b>${fmt(shiftedShare * 100, 0)}%</b> you'd shift in \u2014 <b>${fmt(freeShare * 100, 0)}% free</b> total.`
-        : `. Drag the slider to shift daytime load (EV, laundry, pool, pre-cooling) into those hours.`);
+    document.getElementById('freeNote').textContent = shiftPct > 0
+      ? `${fmt(combined * 100, 0)}% in windows + ${fmt(shiftedShare * 100, 0)}% shifted`
+      : 'combined windows (move slider to add shifted load)';
     drawProfile();
   }
   function calc() {
