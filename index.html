@@ -174,10 +174,13 @@
           <input type="range" id="shift" min="0" max="60" step="5" value="0">
           <span id="shiftLbl" style="font-weight:600;min-width:34px;text-align:right">0%</span>
         </div>
-        <div class="ctrl-line" style="margin-top:2px">
-          <span class="ctrl-lbl">Window coverage</span>
-          <span style="color:var(--night);font-weight:700" id="winShare">&mdash;</span>
-          <small class="help">of your usage falls in these windows</small>
+        <div class="ctrl-line" style="margin-top:6px;margin-bottom:2px">
+          <span class="ctrl-lbl">Free usage</span>
+          <span id="freePct" style="font-size:26px;font-weight:700;color:var(--night)">&mdash;</span>
+          <small class="help">of total kWh billed at $0</small>
+        </div>
+        <div class="ctrl-line" style="margin-top:0">
+          <small class="help" id="freeBreakdown" style="line-height:1.4"></small>
         </div>
       </div>
     </div>
