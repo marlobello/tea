@@ -109,6 +109,12 @@ small.help{color:var(--muted);font-size:11px}
 .instructions{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
   padding:12px 14px;margin-top:18px;font-size:13px;color:var(--muted)}
 .instructions b{color:var(--text)}
+.instructions a{color:var(--accent)}
+.instr-intro{margin:6px 0 8px}
+.instr-steps{margin:0 0 12px;padding-left:20px}
+.instr-steps li{margin:4px 0}
+.instr-img{display:block;width:100%;max-width:480px;margin:4px auto 0;border:1px solid var(--line);
+  border-radius:8px;background:#fff}
 .spinner{display:inline-block;width:15px;height:15px;border:2px solid var(--line);
   border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
 @keyframes spin{to{transform:rotate(360deg)}}
