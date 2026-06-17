@@ -57,12 +57,12 @@ export function initCalculator(IV) {
       <td style="text-align:center"><input type="checkbox" class="fn"${p.fn ? ' checked' : ''}></td>
       <td style="text-align:center"><input type="checkbox" class="fw"${p.fw ? ' checked' : ''}></td>
       <td><button class="btn del">\u2715</button></td>`;
-    tr.querySelector('.del').onclick = () => tr.remove();
+    tr.querySelector('.del').onclick = () => { tr.remove(); calc(); };
     tr.querySelectorAll('input').forEach(i => i.oninput = calc);
     body.appendChild(tr);
   }
   defaultPlans.forEach(addRow);
-  document.getElementById('addPlan').onclick = () => addRow({ name: "New plan", base: 0, day: 15, tduBase: 4.90, tduRate: 5.1461, credit: 0, cmin: 0, fn: false, fw: false });
+  document.getElementById('addPlan').onclick = () => { addRow({ name: "New plan", base: 0, day: 15, tduBase: 4.90, tduRate: 5.1461, credit: 0, cmin: 0, fn: false, fw: false }); calc(); };
 
   let planChart;
   function updateWin() {
@@ -133,6 +133,5 @@ export function initCalculator(IV) {
   }
   ['nightStart', 'nightEnd', 'wStartDay', 'wStartHour', 'wEndDay', 'wEndHour', 'shift']
     .forEach(id => document.getElementById(id).oninput = () => { calc(); });
-  document.getElementById('calc').onclick = calc;
   updateWin(); calc();
 }
