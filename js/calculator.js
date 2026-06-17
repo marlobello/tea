@@ -107,7 +107,7 @@ export function initCalculator(IV) {
         if (p.credit > 0 && total >= p.cmin) c -= p.credit;
         monthly.push(c); annual += c;
       });
-      return { name: p.name, annual, monthly, eff: annualKwh > 0 ? annual / annualKwh * 100 : 0, free: [p.fn ? 'N' : '', p.fw ? 'W' : ''].filter(Boolean).join('+') };
+      return { name: p.name, annual, monthly, eff: annualKwh > 0 ? annual / annualKwh * 100 : 0, free: [p.fn ? '<span title="Free nights">\u{1F319}</span>' : '', p.fw ? '<span title="Free weekends">\u{1F4C5}</span>' : ''].filter(Boolean).join(' ') };
     });
     results.sort((a, b) => a.annual - b.annual);
     const best = results[0].annual;
@@ -118,7 +118,7 @@ export function initCalculator(IV) {
         <td>${i === 0 ? '\u2014' : '+' + usd(r.annual - best)}</td>
         <td>${i === 0 ? '<span class="pill good">cheapest</span>' : ''}</td></tr>`).join('')}
       </tbody></table>
-      <small class="help">Free-hours windows &mdash; nights ${win.s}:00\u2013${win.e}:00, weekends ${DOWN[weekend.sd]} ${weekend.sh}:00 \u2192 ${DOWN[weekend.ed]} ${weekend.eh}:59 &mdash; applied per plan as checked (N=nights, W=weekends); those hours are billed $0 energy (TDU delivery still applies to all kWh). +${(shiftPct * 100) | 0}% of daytime load shifted into free hours for marked plans. Credit applied when a month's total is at or above the min kWh.</small>`;
+      <small class="help">Free-hours windows &mdash; nights ${win.s}:00\u2013${win.e}:00, weekends ${DOWN[weekend.sd]} ${weekend.sh}:00 \u2192 ${DOWN[weekend.ed]} ${weekend.eh}:59 &mdash; applied per plan as checked (\u{1F319} nights, \u{1F4C5} weekends); those hours are billed $0 energy (TDU delivery still applies to all kWh). +${(shiftPct * 100) | 0}% of daytime load shifted into free hours for marked plans. Credit applied when a month's total is at or above the min kWh.</small>`;
     const colors = ['#51cf66', '#4dabf7', '#ffd43b', '#ff922b', '#ff6b6b', '#b197fc', '#63e6be'];
     const labels = calcMonths.map(m => m.slice(2));
     if (planChart) planChart.destroy();
