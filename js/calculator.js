@@ -73,19 +73,19 @@ export function initCalculator(IV) {
     const shiftPct = +document.getElementById('shift').value / 100;
     document.getElementById('shiftLbl').textContent = (shiftPct * 100 | 0) + '%';
 
-    // Separate window shares (what the user liked seeing) + the combined union
-    // for the slider-aware free-usage figure.
+    // Current usage = natural shares in each window.
     const nShare = windowShare((wd, h) => inNightWin(h));
     const wShare = windowShare((wd, h) => inWeekendWin(wd, h));
     const combined = windowShare((wd, h) => inNightWin(h) || inWeekendWin(wd, h));
-    const shiftedShare = (1 - combined) * shiftPct;
-    const freeShare = combined + shiftedShare;
+    // Target usage = current + daytime load shifted into the free hours, split
+    // between nights and weekends proportionally to their current shares.
+    const shiftedTotal = (1 - combined) * shiftPct;
+    const denom = nShare + wShare;
+    const tNight = nShare + (denom > 0 ? shiftedTotal * (nShare / denom) : 0);
+    const tWeek = wShare + (denom > 0 ? shiftedTotal * (wShare / denom) : 0);
 
-    document.getElementById('winShare').innerHTML = `nights ${fmt(nShare * 100, 0)}% &middot; weekends ${fmt(wShare * 100, 0)}%`;
-    document.getElementById('freePct').textContent = fmt(freeShare * 100, 0) + '%';
-    document.getElementById('freeNote').textContent = shiftPct > 0
-      ? `${fmt(combined * 100, 0)}% in windows + ${fmt(shiftedShare * 100, 0)}% shifted`
-      : 'combined windows (move slider to add shifted load)';
+    document.getElementById('curUsage').innerHTML = `nights ${fmt(nShare * 100, 0)}% &middot; weekends ${fmt(wShare * 100, 0)}%`;
+    document.getElementById('targetUsage').innerHTML = `nights ${fmt(tNight * 100, 0)}% &middot; weekends ${fmt(tWeek * 100, 0)}%`;
     drawProfile();
   }
   function calc() {
