@@ -38,8 +38,8 @@ export function renderDashboard(IV) {
     Chart.register({
       id: 'thr', afterDraw: c => {
         if (c.canvas.id === 'monthlyChart') thresholdLines(c, [
-          { y: 1000, c: '#4dabf7', t: '1000 kWh credit threshold' },
-          { y: 2000, c: '#ff922b', t: '2000 kWh' }]);
+          { y: 1000, c: '#4dabf7' },
+          { y: 2000, c: '#ff922b' }]);
       }
     });
     thresholdRegistered = true;
@@ -50,7 +50,7 @@ export function renderDashboard(IV) {
       const y = scales.y.getPixelForValue(v.y);
       ctx.save(); ctx.strokeStyle = v.c; ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(chartArea.left, y); ctx.lineTo(chartArea.right, y); ctx.stroke();
-      ctx.fillStyle = v.c; ctx.font = '10px sans-serif'; ctx.fillText(v.t, chartArea.left + 4, y - 3); ctx.restore();
+      ctx.restore();
     });
   }
   const cm = calMonthly.filter(m => m.days >= 10);
