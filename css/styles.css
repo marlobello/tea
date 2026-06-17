@@ -59,8 +59,6 @@ th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;le
 .btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
 .btn.del{background:transparent;color:var(--bad);border:1px solid #5a2a2a;padding:4px 8px;font-size:12px}
 .winner{outline:2px solid var(--good);outline-offset:-2px}
-.ins{font-size:13px;margin:6px 0;padding-left:22px;position:relative}
-.ins::before{content:"\203A";position:absolute;left:6px;color:var(--accent);font-weight:700}
 .legtag{font-size:11px;color:var(--muted)}
 .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .tab{padding:6px 14px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);
